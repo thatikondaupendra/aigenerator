@@ -1,0 +1,2 @@
+# xformers Windows wheels are tightly coupled to Torch versions.
+# Install manually only if a matching wheel exists for your Torch/CUDA pair.
