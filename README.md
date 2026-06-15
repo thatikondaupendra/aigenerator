@@ -38,6 +38,36 @@ To launch backend and frontend in separate PowerShell windows:
 powershell -ExecutionPolicy Bypass -File scripts\run_project_windows.ps1
 ```
 
+## Quick Start on Google Colab
+
+Use a GPU runtime, clone or upload this project, then run these cells from the project root.
+
+```bash
+pip install -r requirements.txt
+cd frontend && npm install && cd ..
+```
+
+Start the backend:
+
+```bash
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+
+In another cell, start the frontend:
+
+```bash
+cd frontend
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Open the Colab forwarded `5173-...colab.dev` URL. The frontend automatically calls the matching `8000-...colab.dev` backend URL. If the UI says the API is offline, open the matching backend health URL once in the browser:
+
+```text
+https://8000-<same-colab-host>/health
+```
+
+Do not set `VITE_API_BASE=http://localhost:8000` in Colab unless you are opening the frontend on the same machine. Browser requests need the forwarded Colab `8000-...` URL.
+
 ## Quick Start on Linux
 
 ```bash

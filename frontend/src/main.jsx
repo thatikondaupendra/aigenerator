@@ -3,7 +3,21 @@ import { createRoot } from 'react-dom/client'
 import { Clapperboard, ImageUp, Play, Sparkles, Wand2, AlertCircle } from 'lucide-react'
 import './styles.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+function resolveApiBase() {
+  const { protocol, hostname } = window.location
+  const colabPortMatch = hostname.match(/^(\d+)-(.+\.colab(?:\.dev|\.research\.google\.com)?)$/)
+
+  if (colabPortMatch) {
+    return `${protocol}//8000-${colabPortMatch[2]}`
+  }
+
+  const configured = import.meta.env.VITE_API_BASE
+  if (configured) return configured.replace(/\/$/, '')
+
+  return 'http://localhost:8000'
+}
+
+const API_BASE = resolveApiBase()
 
 // Error boundary for catching React errors
 class ErrorBoundary extends React.Component {
@@ -77,7 +91,18 @@ function App() {
   const [jobs, setJobs] = useState([])
   const [activeImage, setActiveImage] = useState('')
   const [error, setError] = useState('')
+  const [apiStatus, setApiStatus] = useState('checking')
   const latest = useMemo(() => jobs.find((job) => job.status === 'completed' && job.result?.image_path), [jobs])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.json()
+      })
+      .then((data) => setApiStatus(`connected: ${data.gpu?.name || 'backend'}`))
+      .catch((err) => setApiStatus(`offline: ${err.message}`))
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -173,6 +198,9 @@ function App() {
       <section className="mx-auto grid max-w-7xl gap-5 px-5 py-5 lg:grid-cols-[390px_1fr]">
         <aside className="space-y-4">
           <div className="rounded-md border border-black/10 bg-[#fbfaf7] p-4 shadow-sm">
+            <p className={`mb-3 rounded px-2 py-1 text-xs ${apiStatus.startsWith('connected') ? 'bg-teal/10 text-teal' : 'bg-red-50 text-red-700'}`}>
+              API {apiStatus} · {API_BASE}
+            </p>
             <label className="text-sm font-medium">Prompt</label>
             <textarea
               value={prompt}
